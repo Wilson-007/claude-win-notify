@@ -1,0 +1,43 @@
+{
+  "name": "claude-win-notify",
+  "version": "1.0.0",
+  "description": "Windows toast notifications for Claude Code via BurntToast",
+  "author": {
+    "name": "Wilson-007"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/Wilson-007/claude-win-notify",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File \"${CLAUDE_PLUGIN_ROOT}/src/session-register.ps1\""
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File \"${CLAUDE_PLUGIN_ROOT}/src/toast.ps1\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File \"${CLAUDE_PLUGIN_ROOT}/src/toast.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}

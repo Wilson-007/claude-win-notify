@@ -1,0 +1,13 @@
+{
+  "name": "claude-win-notify",
+  "owner": {
+    "name": "Wilson-007"
+  },
+  "plugins": [
+    {
+      "name": "claude-win-notify",
+      "source": ".",
+      "description": "Windows toast notifications for Claude Code via BurntToast"
+    }
+  ]
+}

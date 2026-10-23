@@ -50,6 +50,25 @@ The installer:
 
 After installing, **restart Claude Code** (or open `/hooks` once) to load the new hooks.
 
+### Option C — Claude Code plugin
+
+Requires BurntToast to be installed first (the plugin does not install it). Then:
+
+```powershell
+claude plugin marketplace add Wilson-007/claude-win-notify
+claude plugin install claude-win-notify@claude-win-notify
+```
+
+Or in one step (Claude Code v2.1.292+):
+
+```powershell
+claude plugin install claude-win-notify --marketplace Wilson-007/claude-win-notify
+```
+
+The plugin registers the same three hooks, but runs the scripts bundled inside the plugin (`${CLAUDE_PLUGIN_ROOT}/src/*.ps1`) instead of copying them to `~/.claude/`. Unlike the installer, the plugin does **not** install BurntToast — install it first with `Install-Module BurntToast -Scope CurrentUser` (or copy it offline).
+
+Uninstall with `/plugin uninstall claude-win-notify`.
+
 ## Usage
 
 To get friendly toast titles, launch sessions with a name:

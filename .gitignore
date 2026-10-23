@@ -6,3 +6,6 @@ diag*.txt
 
 # Session map cache (generated at runtime under ~/.claude)
 session-map/
+
+# Local Claude Code session logs / metadata
+.claude/
