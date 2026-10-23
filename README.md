@@ -7,7 +7,7 @@ Windows toast notifications for [Claude Code](https://claude.com/claude-code), s
 
 It also distinguishes between multiple concurrent sessions/windows (task A/B/C) by showing a friendly name and a short session code on each toast.
 
-Uses the built-in [BurntToast](https://github.com/Windos/BurntToast) PowerShell module — no admin rights, no background service.
+Uses the bundled [SnoreToast](https://github.com/KDE/snoretoast) executable — no admin rights, no background service, no PowerShell module install.
 
 ## Features
 
@@ -41,7 +41,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 The installer:
 
-1. Installs the BurntToast module (current-user scope) if missing.
+1. Copies the bundled `SnoreToast.exe` toast binary into `~/.claude/` (no PSGallery / module install needed).
 2. Copies `session-register.ps1` and `toast.ps1` into `~/.claude/` (as UTF-8 with BOM — required for Chinese text on PowerShell 5.1).
 3. Registers three hooks in `~/.claude/settings.json`:
    - `SessionStart` → `session-register.ps1`
@@ -52,7 +52,7 @@ After installing, **restart Claude Code** (or open `/hooks` once) to load the ne
 
 ### Option C — Claude Code plugin
 
-Requires BurntToast to be installed first (the plugin does not install it). Then:
+Bundles `SnoreToast.exe` inside the plugin — no separate install needed. Then:
 
 ```powershell
 claude plugin marketplace add Wilson-007/claude-win-notify
@@ -65,7 +65,7 @@ Or in one step (Claude Code v2.1.292+):
 claude plugin install claude-win-notify --marketplace Wilson-007/claude-win-notify
 ```
 
-The plugin registers the same three hooks, but runs the scripts bundled inside the plugin (`${CLAUDE_PLUGIN_ROOT}/src/*.ps1`) instead of copying them to `~/.claude/`. Unlike the installer, the plugin does **not** install BurntToast — install it first with `Install-Module BurntToast -Scope CurrentUser` (or copy it offline).
+The plugin registers the same three hooks, but runs the scripts bundled inside the plugin (`${CLAUDE_PLUGIN_ROOT}/src/*.ps1`) instead of copying them to `~/.claude/`. The `SnoreToast.exe` binary ships alongside `toast.ps1` in the plugin's `src/` directory, so no BurntToast module is required.
 
 Uninstall with `/plugin uninstall claude-win-notify`.
 
@@ -111,7 +111,8 @@ Removes the three hooks from `settings.json` and deletes the two scripts. (Your 
 
 - **Chinese shows as `????` / mojibake** — the hook scripts must be UTF-8 *with BOM* on PowerShell 5.1. The installer already writes them correctly; only relevant if you edit them by hand.
 - **Hooks don't fire after install** — restart Claude Code or open `/hooks` once. Hooks added to `settings.json` mid-session aren't picked up until reload.
-- **BurntToast install fails (PSGallery missing)** — run `Register-PSRepository -Default` then retry, or `Install-Module BurntToast -Scope CurrentUser -Force`.
+- **No toast appears** — make sure `SnoreToast.exe` sits next to `toast.ps1` (both live in `~/.claude/` after `install.ps1`). Re-run `install.ps1` if the exe is missing.
+- **First run creates a Start Menu shortcut** — on first use, SnoreToast registers a `Claude Code` app identity (so the toast header shows "Claude Code" instead of "SnoreToast") by adding a Start Menu shortcut. `uninstall.ps1` removes it; if uninstalling manually, delete `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Claude Code\` yourself.
 
 ## Project layout
 
@@ -123,7 +124,11 @@ claude-win-notify/
 ├── uninstall.ps1        # removes hooks + scripts
 ├── src/
 │   ├── session-register.ps1
-│   └── toast.ps1
+│   ├── toast.ps1
+│   └── SnoreToast.exe   # bundled toast binary (LGPL-3.0)
+├── vendor/
+│   └── SnoreToast/
+│       └── LICENSE      # SnoreToast LGPL-3.0 license text
 └── test/
     └── simulate.ps1     # manual verification without a real session
 ```
@@ -131,3 +136,5 @@ claude-win-notify/
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+The bundled `SnoreToast.exe` is [SnoreToast](https://github.com/KDE/snoretoast) by Hannah von Reth (KDE), distributed unmodified under the [LGPL-3.0](vendor/SnoreToast/LICENSE). It is invoked as a separate process, so this project's own code remains MIT.

@@ -47,14 +47,25 @@ if (-not $label) {
 }
 
 if ($event -eq "Stop") {
-    $title = "$label · 已完成"
+    $title = "已完成 · $label"
     $body  = "任务跑完了  (session $shortId)"
 } else {
-    $title = "$label · 需要确认"
+    $title = "需要确认 · $label"
     $body  = "请回终端选择 yes/no  (session $shortId)"
 }
 
-Import-Module BurntToast -ErrorAction SilentlyContinue
-try {
-    New-BurntToastNotification -Text $title, $body -ErrorAction Stop
-} catch { }
+$snoreToast = Join-Path $PSScriptRoot "SnoreToast.exe"
+if (Test-Path $snoreToast) {
+    # Branded app identity so the toast header reads "Claude Code" instead of "SnoreToast".
+    $appId = "ClaudeCode.Notify"
+    $shortcut = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Claude Code\Claude Code.lnk"
+    if (-not (Test-Path $shortcut)) {
+        & $snoreToast -install "Claude Code\Claude Code" $snoreToast $appId *> $null
+        for ($i = 0; $i -lt 20 -and -not (Test-Path $shortcut); $i++) { Start-Sleep -Milliseconds 50 }
+    }
+    if ($event -eq "Stop") {
+        & $snoreToast -appID $appId -t $title -m $body -s Notification.Default -d short *> $null
+    } else {
+        & $snoreToast -appID $appId -t $title -m $body -s Notification.Reminder -d long *> $null
+    }
+}

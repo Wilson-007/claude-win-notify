@@ -1,7 +1,7 @@
 ﻿# Claude Code Windows toast notifications - uninstaller
 #
 # Removes the SessionStart / Notification / Stop hooks added by install.ps1,
-# and deletes the two hook scripts. Does NOT touch other settings.
+# and deletes the two hook scripts + SnoreToast.exe + the branded Start Menu shortcut.
 
 $ErrorActionPreference = "Stop"
 
@@ -49,12 +49,19 @@ if (Test-Path $settingsPath) {
     Write-Host "settings.json not found, nothing to clean." -ForegroundColor Yellow
 }
 
-foreach ($f in @('session-register.ps1', 'toast.ps1')) {
+foreach ($f in @('session-register.ps1', 'toast.ps1', 'SnoreToast.exe')) {
     $p = Join-Path $claudeDir $f
     if (Test-Path $p) {
         Remove-Item $p -Force
         Write-Host "Removed $p"
     }
+}
+
+# Remove the branded Start Menu shortcut registered by toast.ps1 (app identity).
+$shortcut = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Claude Code\Claude Code.lnk'
+if (Test-Path $shortcut) {
+    Remove-Item $shortcut -Force
+    Write-Host "Removed $shortcut"
 }
 
 Write-Host "Done. (You may also delete ~/.claude/session-map to clear cached session names.)" -ForegroundColor Cyan

@@ -1,6 +1,6 @@
 ﻿# Claude Code Windows toast notifications - installer
 #
-# Installs BurntToast + two hook scripts, and registers SessionStart /
+# Installs SnoreToast.exe + two hook scripts, and registers SessionStart /
 # Notification(permission_prompt) / Stop hooks in ~/.claude/settings.json
 # without touching your other settings. Safe to run multiple times.
 #
@@ -45,22 +45,27 @@ function Get-ScriptContent([string]$Name) {
     return [System.Text.Encoding]::UTF8.GetString($bytes)
 }
 
-# 2. Ensure BurntToast is installed
-Write-Host "[1/4] Checking BurntToast module..." -ForegroundColor Cyan
-if (Get-Module -ListAvailable -Name BurntToast) {
-    Write-Host "  BurntToast already installed."
-} else {
-    Write-Host "  Installing NuGet provider..."
-    try { Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser | Out-Null } catch { }
-    Write-Host "  Installing BurntToast..."
-    try {
-        Install-Module BurntToast -Scope CurrentUser -Force -ErrorAction Stop
-    } catch {
-        Write-Host "  First attempt failed, re-registering default PSGallery and retrying..." -ForegroundColor Yellow
-        try { Register-PSRepository -Default -ErrorAction SilentlyContinue } catch { }
-        Install-Module BurntToast -Scope CurrentUser -Force
+function Get-SnoreToastExe([string]$Dst) {
+    if ($PSScriptRoot) {
+        $local = Join-Path $PSScriptRoot "src\SnoreToast.exe"
+        if (Test-Path $local) {
+            [System.IO.File]::Copy($local, $Dst, $true)
+            return
+        }
     }
-    Write-Host "  BurntToast installed."
+    $url = "$RepoRawBase/src/SnoreToast.exe"
+    $wc = New-Object System.Net.WebClient
+    $wc.DownloadFile($url, $Dst)
+}
+
+# 2. Write SnoreToast.exe to ~/.claude (bundled toast binary, no PSGallery needed)
+Write-Host "[1/4] Writing SnoreToast.exe..." -ForegroundColor Cyan
+$snoreToastDst = Join-Path $claudeDir 'SnoreToast.exe'
+if (Test-Path $snoreToastDst) {
+    Write-Host "  SnoreToast.exe already present."
+} else {
+    Get-SnoreToastExe $snoreToastDst
+    Write-Host "  -> $snoreToastDst"
 }
 
 # 3. Write hook scripts to ~/.claude (UTF-8 WITH BOM - required by PS 5.1 for Chinese text)
