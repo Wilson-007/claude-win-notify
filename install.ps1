@@ -72,10 +72,21 @@ if (Test-Path $snoreToastDst) {
 Write-Host "[2/4] Writing hook scripts..." -ForegroundColor Cyan
 $registerDst = Join-Path $claudeDir 'session-register.ps1'
 $toastDst    = Join-Path $claudeDir 'toast.ps1'
+$ntfyDst     = Join-Path $claudeDir 'ntfy-push.ps1'
 [System.IO.File]::WriteAllText($registerDst, (Get-ScriptContent 'session-register.ps1'), (New-Object System.Text.UTF8Encoding($true)))
 [System.IO.File]::WriteAllText($toastDst,    (Get-ScriptContent 'toast.ps1'),             (New-Object System.Text.UTF8Encoding($true)))
+[System.IO.File]::WriteAllText($ntfyDst,     (Get-ScriptContent 'ntfy-push.ps1'),         (New-Object System.Text.UTF8Encoding($true)))
 Write-Host "  -> $registerDst"
 Write-Host "  -> $toastDst"
+Write-Host "  -> $ntfyDst"
+
+# ntfy.json placeholder: topic empty = remote push disabled. Only write if missing
+# so a reinstall never overwrites an existing topic/token.
+$ntfyCfg = Join-Path $claudeDir 'ntfy.json'
+if (-not (Test-Path $ntfyCfg)) {
+    [System.IO.File]::WriteAllText($ntfyCfg, '{"server":"https://ntfy.sh","topic":"","token":""}', (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "  -> $ntfyCfg (set `"topic`" to enable phone push)"
+}
 
 # 4. Merge hooks into settings.json (non-destructive, idempotent)
 Write-Host "[3/4] Registering hooks in settings.json..." -ForegroundColor Cyan
@@ -116,10 +127,13 @@ if (Test-Path $settingsPath) {
 
 $registerCmd = 'powershell -NoProfile -File "' + $registerDst + '"'
 $toastCmd    = 'powershell -NoProfile -File "' + $toastDst + '"'
+$ntfyCmd     = 'powershell -NoProfile -File "' + $ntfyDst + '"'
 
 Add-HookToEvent $Settings 'SessionStart' '' $registerCmd
 Add-HookToEvent $Settings 'Notification' 'permission_prompt' $toastCmd
 Add-HookToEvent $Settings 'Stop' '' $toastCmd
+Add-HookToEvent $Settings 'Notification' 'permission_prompt' $ntfyCmd
+Add-HookToEvent $Settings 'Stop' '' $ntfyCmd
 
 $outJson = $Settings | ConvertTo-Json -Depth 30
 [System.IO.File]::WriteAllText($settingsPath, $outJson, (New-Object System.Text.UTF8Encoding($false)))
@@ -133,5 +147,8 @@ Write-Host "    - open /hooks once to reload config"
 Write-Host ""
 Write-Host "  Optional: launch sessions with --name for friendly toast titles:"
 Write-Host "    claude --name MyTask"
+Write-Host ""
+Write-Host "  Optional: phone push via ntfy.sh:"
+Write-Host "    edit ~/.claude/ntfy.json and set `"topic`" to your topic"
 Write-Host ""
 Write-Host "  To remove: run uninstall.ps1"

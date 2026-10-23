@@ -17,7 +17,7 @@ function Remove-HookFromEvent($Settings, [string]$EventName) {
     $kept = @()
     foreach ($g in @($hooks.$EventName)) {
         if ($g -and $g.hooks) {
-            $keptHooks = @($g.hooks) | Where-Object { $_.command -and ($_.command -notmatch 'session-register\.ps1|toast\.ps1') }
+            $keptHooks = @($g.hooks) | Where-Object { $_.command -and ($_.command -notmatch 'session-register\.ps1|toast\.ps1|ntfy-push\.ps1') }
             if ($keptHooks.Count -gt 0) {
                 $g.hooks = @($keptHooks)
                 $kept += $g
@@ -49,7 +49,7 @@ if (Test-Path $settingsPath) {
     Write-Host "settings.json not found, nothing to clean." -ForegroundColor Yellow
 }
 
-foreach ($f in @('session-register.ps1', 'toast.ps1', 'SnoreToast.exe')) {
+foreach ($f in @('session-register.ps1', 'toast.ps1', 'ntfy-push.ps1', 'SnoreToast.exe')) {
     $p = Join-Path $claudeDir $f
     if (Test-Path $p) {
         Remove-Item $p -Force
@@ -64,4 +64,4 @@ if (Test-Path $shortcut) {
     Write-Host "Removed $shortcut"
 }
 
-Write-Host "Done. (You may also delete ~/.claude/session-map to clear cached session names.)" -ForegroundColor Cyan
+Write-Host "Done. (You may also delete ~/.claude/session-map to clear cached session names, and ~/.claude/ntfy.json if you no longer want the phone-push config.)" -ForegroundColor Cyan
