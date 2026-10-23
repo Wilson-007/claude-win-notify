@@ -1,0 +1,8 @@
+# PowerShell transient files
+*.log
+*.tmp
+register-debug*.txt
+diag*.txt
+
+# Session map cache (generated at runtime under ~/.claude)
+session-map/
